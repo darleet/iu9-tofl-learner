@@ -1,17 +1,18 @@
 import os
 import sys
 from pathlib import Path
-from typing import cast
 
 from dotenv import load_dotenv
 
-BASE_DIR = Path(__file__).resolve().parent
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 PYTEST = "pytest" in sys.argv[0] or sys.argv[0] == "-c"
 env_path = BASE_DIR / "test.env" if PYTEST else BASE_DIR / ".env"
 
 load_dotenv(env_path)
 
-MAT_HOST = os.environ.get("MAT_HOST", "localhost")
-MAT_PORT = cast(int, os.environ.get("MAT_PORT", 8095))
-MAT_SECURE = cast(bool, os.environ.get("MAT_SECURE", False))
+DEBUG = os.getenv("DEBUG", "False") == "True"
+
+MAT_HOST = os.getenv("MAT_HOST", "localhost")
+MAT_PORT = int(os.getenv("MAT_PORT", "8095"))
+MAT_SECURE = os.getenv("MAT_SECURE", "False") == "True"
