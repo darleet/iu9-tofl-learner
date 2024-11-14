@@ -1,7 +1,11 @@
 import requests
 
-from learner.models import (EquivalenceRequest, EquivalenceResponse,
-                            MembershipRequest, MembershipResponse)
+from learner.models import (
+    EquivalenceRequest,
+    EquivalenceResponse,
+    MembershipRequest,
+    MembershipResponse,
+)
 
 
 class ClientMAT:
