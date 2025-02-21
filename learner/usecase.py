@@ -74,21 +74,14 @@ class UseCase:
         new_non_main_prefixes: list[str] = []
 
         for i in range(len(self.non_main_table)):
-            if self.non_main_prefixes[i] not in self.prefixes:
-                has_true = False
-                for el in self.non_main_table[i]:
-                    if el:
-                        has_true = True
-                        changed_table = True
-                        break
-
-                if has_true:
-                    logger.info(f"Moved non-main prefix: {self.non_main_prefixes[i]}")
-                    self.table.append(self.non_main_table[i])
-                    self.prefixes.append(self.non_main_prefixes[i])
-                else:
-                    new_non_main_table.append(self.non_main_table[i])
-                    new_non_main_prefixes.append(self.non_main_prefixes[i])
+            if self.non_main_table[i] not in self.table:
+                changed_table = True
+                logger.info(f"Moved non-main prefix: {self.non_main_prefixes[i]}")
+                self.table.append(self.non_main_table[i])
+                self.prefixes.append(self.non_main_prefixes[i])
+            else:
+                new_non_main_table.append(self.non_main_table[i])
+                new_non_main_prefixes.append(self.non_main_prefixes[i])
 
         self.non_main_table = new_non_main_table
         self.non_main_prefixes = new_non_main_prefixes
@@ -114,10 +107,10 @@ class UseCase:
             if suffix not in self.suffixes:
                 self._add_suffix(suffix)
 
-        # was_changed = True
-        # while was_changed:
-        #     was_changed = self._merge_tables()
-        #     self._extend_table()
+        was_changed = True
+        while was_changed:
+            was_changed = self._merge_tables()
+            self._extend_table()
 
     def _process_false(self, word: str) -> None:
         raise NotImplementedError
@@ -149,9 +142,9 @@ class UseCase:
                 ))
 
             if resp.type is None:
-                logger.info(f"Prefixes: {(el for el in self.prefixes)}\n\n")
-                logger.info(f"Non-main prefixes: {(el for el in self.non_main_prefixes)}\n\n")
-                logger.info(f"Suffixes: {(el for el in self.suffixes)}\n\n")
+                logger.info(f"Prefixes: {[el for el in self.prefixes]}")
+                logger.info(f"Non-main prefixes: {[el for el in self.non_main_prefixes]}")
+                logger.info(f"Suffixes: {[el for el in self.suffixes]}")
                 break
 
             logger.info(f"Got counter response: {resp.response}")
@@ -160,9 +153,6 @@ class UseCase:
                 self._process_false(resp.response)
             else:
                 self._process_true(resp.response)
-
-            self._extend_table()
-            self._merge_tables()
 
             while not self.non_main_prefixes:
                 self._extend_table()
