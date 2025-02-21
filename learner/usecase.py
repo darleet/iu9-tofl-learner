@@ -1,7 +1,9 @@
 import logging
 
+from prettytable import PrettyTable
+
 from learner.client import ClientMAT
-from learner.models import MembershipRequest, EquivalenceRequest
+from learner.models import EquivalenceRequest, MembershipRequest
 
 logger = logging.getLogger(__name__)
 
@@ -95,14 +97,17 @@ class UseCase:
                 if prefix == self.EPSILON or other_prefix == self.EPSILON:
                     continue
 
-                if prefix + other_prefix not in self.prefixes and prefix + other_prefix not in self.non_main_prefixes:
+                if (
+                    prefix + other_prefix not in self.prefixes
+                    and prefix + other_prefix not in self.non_main_prefixes
+                ):
                     self._add_prefix(prefix + other_prefix, is_main=False)
                 else:
                     logger.debug(f"Prefix {prefix} already in table")
 
     def _process_true(self, word: str) -> None:
         suffix = ""
-        for i in range(len(word)-1, -1, -1):
+        for i in range(len(word) - 1, -1, -1):
             suffix = word[i] + suffix
             if suffix not in self.suffixes:
                 self._add_suffix(suffix)
@@ -114,6 +119,13 @@ class UseCase:
 
     def _process_false(self, word: str) -> None:
         raise NotImplementedError
+
+    def _print_table(self) -> None:
+        table = PrettyTable()
+        table.field_names = [""] + self.suffixes
+        for i, row in enumerate(self.table):
+            table.add_row([self.prefixes[i]] + [str(int(el)) for el in row])
+        logger.info("\n" + table.get_string())
 
     def run(self) -> None:
         logger.info("App started successfully")
@@ -131,7 +143,13 @@ class UseCase:
             main_prefixes = " ".join(self.prefixes)
             non_main_prefixes = " ".join(self.non_main_prefixes)
             suffixes = " ".join(self.suffixes)
-            table = " ".join([str(int(col)) for row in self.table + self.non_main_table for col in row])
+            table = " ".join(
+                [
+                    str(int(col))
+                    for row in self.table + self.non_main_table
+                    for col in row
+                ]
+            )
 
             resp = self.client.post_equivalence(
                 EquivalenceRequest(
@@ -139,23 +157,25 @@ class UseCase:
                     non_main_prefixes=non_main_prefixes,
                     suffixes=suffixes,
                     table=table,
-                ))
+                )
+            )
 
             if resp.type is None:
-                logger.info(f"Prefixes: {[el for el in self.prefixes]}")
-                logger.info(f"Non-main prefixes: {[el for el in self.non_main_prefixes]}")
-                logger.info(f"Suffixes: {[el for el in self.suffixes]}")
+                self._print_table()
                 break
+
+            if not resp.response:
+                raise Exception
 
             logger.info(f"Got counter response: {resp.response}")
 
             if not resp.type:
+                self._print_table()
                 self._process_false(resp.response)
             else:
+                self._print_table()
                 self._process_true(resp.response)
 
             while not self.non_main_prefixes:
                 self._extend_table()
                 self._merge_tables()
-
-
